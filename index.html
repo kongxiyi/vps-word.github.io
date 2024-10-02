@@ -5,24 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GitHub文件管理系统</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
-    <h1>GitHub文件管理系统</h1>
-    <div id="auth">
-        <input type="text" id="token-input" placeholder="输入GitHub个人访问令牌">
-        <button id="auth-btn">认证</button>
+    <div class="container">
+        <h1><i class="fab fa-github"></i> GitHub文件管理系统</h1>
+        <div id="auth">
+            <input type="text" id="token-input" placeholder="输入GitHub个人访问令牌">
+            <button id="auth-btn"><i class="fas fa-sign-in-alt"></i> 认证</button>
+        </div>
+        <div id="user-info" style="display: none;"></div>
+        <div id="file-actions" style="display: none;">
+            <button id="new-file-btn"><i class="fas fa-plus"></i> 新建文件</button>
+            <button id="batch-delete-btn"><i class="fas fa-trash"></i> 批量删除</button>
+            <button id="refresh-btn"><i class="fas fa-sync-alt"></i> 刷新</button>
+        </div>
+        <div id="new-file-form" style="display: none;">
+            <input type="text" id="new-file-name" placeholder="新文件名">
+            <textarea id="new-file-content" placeholder="文件内容"></textarea>
+            <button id="save-new-file-btn"><i class="fas fa-save"></i> 保存新文件</button>
+            <button id="cancel-new-file-btn"><i class="fas fa-times"></i> 取消</button>
+        </div>
+        <div id="file-list"></div>
+        <div id="file-content" style="display: none;">
+            <textarea id="file-editor" readonly></textarea>
+            <div id="file-buttons">
+                <button id="view-btn"><i class="fas fa-eye"></i> 查看</button>
+                <button id="edit-btn"><i class="fas fa-edit"></i> 编辑</button>
+                <button id="save-btn" style="display: none;"><i class="fas fa-save"></i> 保存</button>
+                <button id="close-btn"><i class="fas fa-times"></i> 关闭</button>
+            </div>
+        </div>
+        <div id="message" class="message"></div>
+        <div id="loading" class="loading" style="display: none;"><i class="fas fa-spinner fa-spin"></i> 处理中...</div>
     </div>
-    <div id="file-list"></div>
-    <div id="file-actions">
-        <input type="text" id="new-file-name" placeholder="新文件名">
-        <button id="new-file-btn">新建文件</button>
-    </div>
-    <div id="file-content">
-        <textarea id="file-editor"></textarea>
-        <button id="save-btn" style="display: none;">保存修改</button>
-    </div>
-    <div id="error-message" style="color: red;"></div>
-    <div id="debug-output" style="white-space: pre-wrap; word-wrap: break-word;"></div>
     <script src="app.js"></script>
 </body>
 </html>

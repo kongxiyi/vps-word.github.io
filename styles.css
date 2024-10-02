@@ -1,0 +1,186 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f2f5;
+    color: #333;
+}
+
+.container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border-radius: 8px;
+}
+
+h1 {
+    color: #2c3e50;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+input[type="text"], textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+textarea {
+    min-height: 200px;
+    resize: vertical;
+}
+
+button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-size: 14px;
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+
+#file-list {
+    margin-top: 2rem;
+}
+
+.file-item {
+    background: #f9f9f9;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.file-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.file-name {
+    font-weight: bold;
+}
+
+.file-size, .file-date {
+    font-size: 0.8em;
+    color: #666;
+}
+
+.file-actions {
+    display: flex;
+}
+
+.file-actions button {
+    margin-left: 0.5rem;
+}
+
+#file-content {
+    margin-top: 2rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 1rem;
+}
+
+#file-buttons {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+#file-buttons button {
+    margin-left: 0.5rem;
+}
+
+.message {
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.loading {
+    text-align: center;
+    padding: 1rem;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    margin-top: 1rem;
+}
+
+#auth, #file-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+#auth input, #file-actions input {
+    flex-grow: 1;
+    margin-right: 1rem;
+}
+
+#user-info {
+    text-align: center;
+    margin-bottom: 1rem;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+#new-file-form {
+    margin-top: 1rem;
+    border: 1px solid #ddd;
+    padding: 1rem;
+    border-radius: 4px;
+}
+
+#new-file-form input,
+#new-file-form textarea {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+#new-file-form button {
+    margin-right: 0.5rem;
+}
+
+.file-checkbox {
+    margin-right: 10px;
+}
+
+#batch-delete-btn {
+    background-color: #e74c3c;
+}
+
+#batch-delete-btn:hover {
+    background-color: #c0392b;
+}
+
+#refresh-btn {
+    background-color: #2ecc71;
+}
+
+#refresh-btn:hover {
+    background-color: #27ae60;
+}
