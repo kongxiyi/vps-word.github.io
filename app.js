@@ -48,6 +48,8 @@ let currentPath = ROOT_FOLDER;
 
 let fileTree = {}; // 初始化为空对象
 
+let currentForm = null;
+
 function addEventListenerSafely(id, event, handler, isQuery = false) {
     const element = isQuery ? document.querySelector(id) : document.getElementById(id);
     if (element) {
@@ -350,13 +352,15 @@ function showForm(formType) {
 }
 
 function hideAllForms() {
-    const forms = ['new-file-form', 'new-folder-form'];
-    forms.forEach(formId => {
-        const form = document.getElementById(formId);
-        if (form) {
-            form.style.display = 'none';
-        }
-    });
+    const fileForm = document.getElementById('new-file-form');
+    const folderForm = document.getElementById('new-folder-form');
+    if (fileForm) {
+        fileForm.remove();
+    }
+    if (folderForm) {
+        folderForm.remove();
+    }
+    currentForm = null;
 }
 
 function createForm(formType) {
@@ -365,12 +369,12 @@ function createForm(formType) {
     
     if (formType === 'file') {
         form.innerHTML = `
-            <input type="text" id="new-file-name" placeholder="新文件名">
-            <select id="new-file-parent">
+            <select id="new-file-parent-select">
                 <option value="${ROOT_FOLDER}">根目录</option>
                 ${generateFolderOptions(ROOT_FOLDER)}
             </select>
-            <textarea id="new-file-content" placeholder="文件内容"></textarea>
+            <input type="text" id="new-file-name-input" placeholder="新文件名">
+            <textarea id="new-file-content-textarea" placeholder="文件内容"></textarea>
             <button id="save-new-file-btn">保存新文件</button>
             <button id="cancel-new-file-btn">取消</button>
         `;
@@ -378,14 +382,16 @@ function createForm(formType) {
         form.querySelector('#cancel-new-file-btn').addEventListener('click', () => hideForm('file'));
     } else {
         form.innerHTML = `
-            <input type="text" id="new-folder-name" placeholder="新文件夹名称">
-            <select id="new-folder-parent">
+            <select id="new-folder-parent-select">
                 <option value="${ROOT_FOLDER}">根目录</option>
                 ${generateFolderOptions(ROOT_FOLDER)}
-            </select>
-            <button onclick="createNewFolder()">创建</button>
-            <button onclick="hideForm('folder')">取消</button>
+            </select>    
+            <input type="text" id="new-folder-name-input" placeholder="新文件夹名称">
+            <button id="create-new-folder-btn">创建</button>
+            <button id="cancel-new-folder-btn">取消</button>
         `;
+        form.querySelector('#create-new-folder-btn').addEventListener('click', createNewFolder);
+        form.querySelector('#cancel-new-folder-btn').addEventListener('click', () => hideForm('folder'));
     }
     
     return form;
@@ -400,18 +406,71 @@ function hideForm(formType) {
 }
 
 function showNewFileForm() {
-    showForm('file');
+    if (currentForm === 'file') {
+        return;
+    }
+    hideAllForms();
+    const form = document.createElement('div');
+    form.id = 'new-file-form';
+    form.innerHTML = `
+        <div class="form-group">
+            <label for="new-file-parent-select">父文件夹：</label>
+            <select id="new-file-parent-select">
+                <option value="${ROOT_FOLDER}">根目录</option>
+                ${generateFolderOptions(ROOT_FOLDER)}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="new-file-name-input">文件名：</label>
+            <input type="text" id="new-file-name-input" placeholder="输入文件名">
+        </div>
+        <div class="form-group">
+            <label for="new-file-content-textarea">文件内容：</label>
+            <textarea id="new-file-content-textarea" placeholder="输入文件内容"></textarea>
+        </div>
+        <button id="save-new-file-btn">保存新文件</button>
+        <button id="cancel-new-file-btn">取消</button>
+    `;
+    document.getElementById('file-actions').appendChild(form);
+    document.getElementById('save-new-file-btn').addEventListener('click', saveNewFile);
+    document.getElementById('cancel-new-file-btn').addEventListener('click', hideAllForms);
+    form.style.display = 'block';
+    currentForm = 'file';
 }
 
 function showNewFolderForm() {
-    showForm('folder');
+    if (currentForm === 'folder') {
+        return;
+    }
+    hideAllForms();
+    const form = document.createElement('div');
+    form.id = 'new-folder-form';
+    form.innerHTML = `
+        <div class="form-group">
+            <label for="new-folder-parent-select">父文件夹：</label>
+            <select id="new-folder-parent-select">
+                <option value="${ROOT_FOLDER}">根目录</option>
+                ${generateFolderOptions(ROOT_FOLDER)}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="new-folder-name-input">文件夹名：</label>
+            <input type="text" id="new-folder-name-input" placeholder="输入文件夹名称">
+        </div>
+        <button id="create-new-folder-btn">创建文件夹</button>
+        <button id="cancel-new-folder-btn">取消</button>
+    `;
+    document.getElementById('file-actions').appendChild(form);
+    document.getElementById('create-new-folder-btn').addEventListener('click', createNewFolder);
+    document.getElementById('cancel-new-folder-btn').addEventListener('click', hideAllForms);
+    form.style.display = 'block';
+    currentForm = 'folder';
 }
 
-// 修改 saveNewFile 函数
 async function saveNewFile() {
-    const fileName = document.getElementById('new-file-name').value.trim();
-    const content = document.getElementById('new-file-content').value;
-    const parentFolder = document.getElementById('new-file-parent').value;
+    const fileName = document.getElementById('new-file-name-input').value.trim();
+    const content = document.getElementById('new-file-content-textarea').value;
+    const parentFolder = document.getElementById('new-file-parent-select').value;
     if (!fileName) {
         showMessage('请输入文件名', true);
         return;
@@ -434,7 +493,7 @@ async function saveNewFile() {
         });
         if (response.ok) {
             showMessage('新文件已创建并保存（已加密）');
-            hideForm('file');
+            hideAllForms();
             fetchFiles();
         } else {
             throw new Error('创建文件失败');
@@ -596,10 +655,9 @@ function displayNoFilesMessage() {
     fileList.innerHTML = '<div class="no-files-message">尚未有文件</div>';
 }
 
-// 修改 createNewFolder 函数
 async function createNewFolder() {
-    const folderName = document.getElementById('new-folder-name').value.trim();
-    const parentFolder = document.getElementById('new-folder-parent').value;
+    const folderName = document.getElementById('new-folder-name-input').value.trim();
+    const parentFolder = document.getElementById('new-folder-parent-select').value;
     if (!folderName) {
         showMessage('请输入文件夹名称', true);
         return;
@@ -622,7 +680,7 @@ async function createNewFolder() {
         if (response.ok) {
             showMessage(`文件夹 ${folderName} 已创建`);
             fetchFiles(); // 刷新文件列表
-            hideForm('folder'); // 隐藏表单
+            hideAllForms(); // 隐藏表单
         } else {
             throw new Error('创建文件夹失败');
         }
@@ -658,4 +716,12 @@ function getFilesInPath(path) {
         }
     }
     return currentLevel;
+}
+
+function hideNewFileForm() {
+    hideForm('file');
+}
+
+function hideNewFolderForm() {
+    hideForm('folder');
 }
