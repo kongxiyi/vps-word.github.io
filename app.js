@@ -2,29 +2,50 @@ let token = '';
 const owner = 'kongxiyi';
 const repo = 'vps-word';
 
-document.getElementById('auth-btn').addEventListener('click', authenticate);
-document.getElementById('new-file-btn').addEventListener('click', showNewFileForm);
-document.getElementById('view-btn').addEventListener('click', () => viewFile(currentFilePath));
-document.getElementById('edit-btn').addEventListener('click', () => editFile(currentFilePath));
-document.getElementById('save-btn').addEventListener('click', () => saveFile(currentFilePath));
-document.getElementById('close-btn').addEventListener('click', closeFile);
-document.getElementById('save-new-file-btn').addEventListener('click', saveNewFile);
-document.getElementById('cancel-new-file-btn').addEventListener('click', hideNewFileForm);
+document.addEventListener('DOMContentLoaded', function() {
+    addEventListenerSafely('auth-btn', 'click', authenticate);
+    addEventListenerSafely('new-file-btn', 'click', showNewFileForm);
+    addEventListenerSafely('view-btn', 'click', () => viewFile(currentFilePath));
+    addEventListenerSafely('edit-btn', 'click', () => editFile(currentFilePath));
+    addEventListenerSafely('save-btn', 'click', () => saveFile(currentFilePath));
+    addEventListenerSafely('close-btn', 'click', closeFile);
+    addEventListenerSafely('save-new-file-btn', 'click', saveNewFile);
+    addEventListenerSafely('cancel-new-file-btn', 'click', hideNewFileForm);
+    addEventListenerSafely('refresh-btn', 'click', refreshFiles);
+    addEventListenerSafely('.notification-close', 'click', closeNotification, true);
+});
 
 let currentFilePath = '';
 let isCreatingNewFile = false;
+
+function addEventListenerSafely(id, event, handler, isQuery = false) {
+    const element = isQuery ? document.querySelector(id) : document.getElementById(id);
+    if (element) {
+        element.addEventListener(event, handler);
+    } else {
+        console.warn(`Element with ${isQuery ? 'selector' : 'id'} "${id}" not found`);
+    }
+}
 
 function showLoading(show = true) {
     document.getElementById('loading').style.display = show ? 'block' : 'none';
 }
 
 function showMessage(message, isError = false) {
-    const messageElement = document.getElementById('message');
-    messageElement.textContent = message;
-    messageElement.className = `message ${isError ? 'error' : 'success'}`;
-    messageElement.style.display = 'block';
-    setTimeout(() => {
-        messageElement.style.display = 'none';
+    const notificationElement = document.getElementById('notification');
+    const contentElement = notificationElement.querySelector('.notification-content');
+    contentElement.textContent = message;
+    notificationElement.className = `notification ${isError ? 'error' : 'success'}`;
+    notificationElement.classList.add('show');
+    
+    // 清除之前的定时器（如果有的话）
+    if (notificationElement.timeoutId) {
+        clearTimeout(notificationElement.timeoutId);
+    }
+    
+    // 设置新的定时器
+    notificationElement.timeoutId = setTimeout(() => {
+        notificationElement.classList.remove('show');
     }, 5000);
 
     if (isError) {
@@ -68,7 +89,6 @@ async function authenticate() {
 }
 
 async function fetchFiles() {
-    showLoading();
     try {
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/files`, {
             headers: {
@@ -84,9 +104,7 @@ async function fetchFiles() {
         const files = await response.json();
         displayFiles(files);
     } catch (error) {
-        showMessage('无法获取文件列表: ' + error.message, true);
-    } finally {
-        showLoading(false);
+        throw new Error('无法获取文件列表: ' + error.message);
     }
 }
 
@@ -105,7 +123,7 @@ function displayFiles(files) {
                     <span class="file-date">${lastModified}</span>
                 </div>
                 <div class="file-actions">
-                    <button onclick="openFile('${file.path}')">打开</button>
+                    <button onclick="openFile('${file.path}')">查看</button>
                     <button onclick="deleteFile('${file.path}')">删除</button>
                 </div>
             `;
@@ -137,8 +155,7 @@ async function openFile(filePath) {
         const content = atob(fileData.content);
         document.getElementById('file-editor').value = content;
         document.getElementById('file-content').style.display = 'block';
-        document.getElementById('file-editor').readOnly = true;
-        document.getElementById('save-btn').style.display = 'none';
+        viewFile(filePath);  // 默认以查看模式打开
         currentFilePath = filePath;
     } catch (error) {
         showMessage('无法打开文件: ' + error.message, true);
@@ -149,11 +166,23 @@ async function openFile(filePath) {
 
 function viewFile(filePath) {
     document.getElementById('file-editor').readOnly = true;
+    document.getElementById('file-editor').classList.add('view-mode');
+    document.getElementById('file-editor').classList.remove('edit-mode');
+    document.getElementById('file-content').classList.add('view-mode');
+    document.getElementById('file-content').classList.remove('edit-mode');
+    document.getElementById('view-btn').style.display = 'none';
+    document.getElementById('edit-btn').style.display = 'inline-block';
     document.getElementById('save-btn').style.display = 'none';
 }
 
 function editFile(filePath) {
     document.getElementById('file-editor').readOnly = false;
+    document.getElementById('file-editor').classList.remove('view-mode');
+    document.getElementById('file-editor').classList.add('edit-mode');
+    document.getElementById('file-content').classList.remove('view-mode');
+    document.getElementById('file-content').classList.add('edit-mode');
+    document.getElementById('view-btn').style.display = 'inline-block';
+    document.getElementById('edit-btn').style.display = 'none';
     document.getElementById('save-btn').style.display = 'inline-block';
 }
 
@@ -312,5 +341,26 @@ async function deleteFile(filePath) {
         showMessage('无法删除文件: ' + error.message, true);
     } finally {
         showLoading(false);
+    }
+}
+
+async function refreshFiles() {
+    showLoading();
+    try {
+        await fetchFiles();
+        showMessage('文件列表已刷新');
+    } catch (error) {
+        showMessage('刷新文件列表失败: ' + error.message, true);
+    } finally {
+        showLoading(false);
+    }
+}
+
+// 添加关闭通知的函数
+function closeNotification() {
+    const notificationElement = document.getElementById('notification');
+    notificationElement.classList.remove('show');
+    if (notificationElement.timeoutId) {
+        clearTimeout(notificationElement.timeoutId);
     }
 }

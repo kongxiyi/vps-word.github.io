@@ -19,6 +19,7 @@
             <button id="new-file-btn"><i class="fas fa-plus"></i> 新建文件</button>
             <button id="batch-delete-btn"><i class="fas fa-trash"></i> 批量删除</button>
             <button id="refresh-btn"><i class="fas fa-sync-alt"></i> 刷新</button>
+            <button id="logout-btn" style="display: none;"><i class="fas fa-sign-out-alt"></i> 退出</button>
         </div>
         <div id="new-file-form" style="display: none;">
             <input type="text" id="new-file-name" placeholder="新文件名">
@@ -40,5 +41,9 @@
         <div id="loading" class="loading" style="display: none;"><i class="fas fa-spinner fa-spin"></i> 处理中...</div>
     </div>
     <script src="app.js"></script>
+    <div id="notification" class="notification">
+        <div class="notification-content"></div>
+        <button class="notification-close">&times;</button>
+    </div>
 </body>
 </html>

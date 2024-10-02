@@ -184,3 +184,118 @@ button:hover {
 #refresh-btn:hover {
     background-color: #27ae60;
 }
+
+#logout-btn {
+    background-color: #e74c3c;
+}
+
+#logout-btn:hover {
+    background-color: #c0392b;
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: -350px;
+    width: 300px;
+    padding: 15px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+}
+
+.notification.show {
+    right: 20px;
+    transform: translateY(10px);
+}
+
+.notification.success {
+    background-color: #4CAF50;
+}
+
+.notification.error {
+    background-color: #f44336;
+}
+
+.notification-content {
+    flex-grow: 1;
+    margin-right: 15px;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+#file-editor {
+    width: 100%;
+    min-height: 300px;
+    padding: 10px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+#file-editor.view-mode {
+    background-color: #f9f9f9;
+    color: #333;
+}
+
+#file-editor.edit-mode {
+    background-color: #fff;
+    color: #000;
+    border-color: #3498db;
+}
+
+#file-content.view-mode #edit-btn {
+    display: inline-block;
+}
+
+#file-content.view-mode #save-btn {
+    display: none;
+}
+
+#file-content.edit-mode #edit-btn {
+    display: none;
+}
+
+#file-content.edit-mode #save-btn {
+    display: inline-block;
+}
+
+#file-content.view-mode #view-btn {
+    display: none;
+}
+
+#file-content.view-mode #edit-btn {
+    display: inline-block;
+}
+
+#file-content.edit-mode #view-btn {
+    display: inline-block;
+}
+
+#file-content.edit-mode #edit-btn {
+    display: none;
+}
+
+#file-content.edit-mode #save-btn {
+    display: inline-block;
+}
+
+#file-content.view-mode #save-btn {
+    display: none;
+}
