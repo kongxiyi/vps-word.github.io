@@ -64,7 +64,10 @@ function displayFiles(files) {
 
 async function viewFile(filePath) {
     try {
-        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/files/${filePath}`, {
+        // 确保文件路径以 'files/' 开头
+        const fullPath = filePath.startsWith('files/') ? filePath : `files/${filePath}`;
+        
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${fullPath}`, {
             headers: {
                 'Authorization': `token ${token}`,
                 'Accept': 'application/vnd.github.v3+json'
@@ -84,7 +87,10 @@ async function viewFile(filePath) {
 async function saveFile(filePath) {
     const content = document.getElementById('file-editor').value;
     try {
-        const fileResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
+        // 确保文件路径以 'files/' 开头
+        const fullPath = filePath.startsWith('files/') ? filePath : `files/${filePath}`;
+        
+        const fileResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${fullPath}`, {
             headers: {
                 'Authorization': `token ${token}`,
                 'Accept': 'application/vnd.github.v3+json'
@@ -92,11 +98,12 @@ async function saveFile(filePath) {
         });
         const fileData = await fileResponse.json();
         
-        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${fullPath}`, {
             method: 'PUT',
             headers: {
                 'Authorization': `token ${token}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/vnd.github.v3+json'
             },
             body: JSON.stringify({
                 message: `Update ${filePath}`,
@@ -105,7 +112,7 @@ async function saveFile(filePath) {
             })
         });
         if (response.ok) {
-            alert('文件已保存');
+            showError('文件已保存', 'green');
             fetchFiles();
         } else {
             const errorData = await response.json();
@@ -113,7 +120,7 @@ async function saveFile(filePath) {
         }
     } catch (error) {
         console.error('无法保存文件:', error);
-        alert('保存文件失败。');
+        showError('保存文件失败。');
     }
 }
 
@@ -152,7 +159,10 @@ async function createNewFile() {
 async function deleteFile(filePath) {
     if (!confirm(`确定要删除 ${filePath} 吗？`)) return;
     try {
-        const fileResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
+        // 确保文件路径以 'files/' 开头
+        const fullPath = filePath.startsWith('files/') ? filePath : `files/${filePath}`;
+        
+        const fileResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${fullPath}`, {
             headers: {
                 'Authorization': `token ${token}`,
                 'Accept': 'application/vnd.github.v3+json'
@@ -160,11 +170,12 @@ async function deleteFile(filePath) {
         });
         const fileData = await fileResponse.json();
         
-        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${fullPath}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `token ${token}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/vnd.github.v3+json'
             },
             body: JSON.stringify({
                 message: `Delete ${filePath}`,
@@ -172,7 +183,7 @@ async function deleteFile(filePath) {
             })
         });
         if (response.ok) {
-            alert('文件已删除');
+            showError('文件已删除', 'green');
             fetchFiles();
         } else {
             const errorData = await response.json();
@@ -180,7 +191,7 @@ async function deleteFile(filePath) {
         }
     } catch (error) {
         console.error('无法删除文件:', error);
-        alert('删除文件失败。');
+        showError('删除文件失败。');
     }
 }
 
