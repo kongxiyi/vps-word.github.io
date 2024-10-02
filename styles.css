@@ -62,7 +62,7 @@ button:hover {
     padding: 0.75rem 1rem;
     border-bottom: 1px solid #eee;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     transition: background-color 0.2s;
 }
@@ -76,6 +76,7 @@ button:hover {
 }
 
 .folder-name, .file-name {
+    flex: 1;
     display: flex;
     align-items: center;
     cursor: pointer;
@@ -114,24 +115,34 @@ button:hover {
 
 .file-info {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    margin-right: 10px;
+    font-size: 0.8em;
+    color: #666;
+    white-space: nowrap;
 }
 
 .file-name {
     font-weight: bold;
 }
 
-.file-size, .file-date {
-    font-size: 0.8em;
-    color: #666;
+.file-size {
+    margin-right: 10px;
+}
+
+.file-date {
+    margin-left: auto;
 }
 
 .file-actions {
     display: flex;
+    align-items: center;
 }
 
 .file-actions button {
-    margin-left: 0.5rem;
+    padding: 5px 10px;
+    margin-left: 5px;
+    font-size: 0.9em;
 }
 
 #file-content {
@@ -285,6 +296,7 @@ button:hover {
 
 #batch-delete-btn {
     background-color: #e74c3c;
+    margin-bottom: 10px;
 }
 
 #batch-delete-btn:hover {
@@ -497,7 +509,7 @@ button:hover {
     cursor: pointer;
     display: flex;
     align-items: center;
-    margin-right: 10px;
+    margin-right: auto;
 }
 
 .folder-name:hover, .file-name:hover {
@@ -525,7 +537,7 @@ button:hover {
 }
 
 .file-actions {
-    display: inline-flex;
+    display: flex;
     margin-left: 10px;
 }
 

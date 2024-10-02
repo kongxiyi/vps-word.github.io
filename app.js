@@ -39,6 +39,9 @@ document.addEventListener('DOMContentLoaded', function() {
     addEventListenerSafely('cancel-new-file-btn', 'click', hideNewFileForm);
     addEventListenerSafely('refresh-btn', 'click', refreshFiles);
     addEventListenerSafely('.notification-close', 'click', closeNotification, true);
+
+    // 添加批量删除按钮的事件监听器
+    addEventListenerSafely('batch-delete-btn', 'click', batchDeleteFiles);
 });
 
 let currentFilePath = '';
@@ -261,10 +264,17 @@ function displayFiles(files) {
         const fileItem = document.createElement('div');
         fileItem.className = 'file-item';
         const icon = file.type === 'dir' ? '<i class="fas fa-folder"></i>' : '<i class="fas fa-file"></i>';
+        const size = file.type === 'file' ? formatFileSize(file.size) : '';
+        const lastUpdated = new Date(file.updated_at).toLocaleString();
         fileItem.innerHTML = `
+            ${file.type === 'file' ? `<input type="checkbox" class="file-checkbox" data-path="${file.path}">` : ''}
             <span class="${file.type === 'dir' ? 'folder-name' : 'file-name'}">
                 ${icon}
                 ${file.name}
+            </span>
+            <span class="file-info">
+                ${size ? `<span class="file-size">${size}</span>` : ''}
+                <span class="file-date">${lastUpdated}</span>
             </span>
             <div class="file-actions">
                 ${file.type === 'dir' 
@@ -924,4 +934,33 @@ async function updateFileTree() {
         console.error('Error updating file tree:', error);
         showMessage('无法更新文件树: ' + error.message, true);
     }
+}
+
+async function batchDeleteFiles() {
+    const checkboxes = document.querySelectorAll('.file-checkbox:checked');
+    if (checkboxes.length === 0) {
+        showMessage('请选择要删除的文件', true);
+        return;
+    }
+
+    if (!confirm(`确定要删除选中的 ${checkboxes.length} 个文件吗？`)) return;
+
+    showLoading();
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const checkbox of checkboxes) {
+        const path = checkbox.getAttribute('data-path');
+        try {
+            await deleteFile(path, false);
+            successCount++;
+        } catch (error) {
+            console.error(`Error deleting ${path}:`, error);
+            failCount++;
+        }
+    }
+
+    showMessage(`批量删除完成。成功：${successCount}，失败：${failCount}`);
+    fetchFiles(currentPath);
+    showLoading(false);
 }
