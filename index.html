@@ -8,10 +8,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.2.1/jsencrypt.min.js"></script> -->
      <script src="./jsencrypt.js"></script>
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <h1><i class="fab fa-github"></i> GitHub文件管理系统</h1>
+        <h1><i class="fab fa-github"></i> 文件管理系统</h1>
         <div id="auth">
             <input type="text" id="token-input" placeholder="输入GitHub个人访问令牌">
             <button id="auth-btn"><i class="fas fa-sign-in-alt"></i> 认证</button>
@@ -49,6 +50,7 @@
     </div>
     <div id="key-dialog" class="modal">
         <div class="modal-content">
+            <span class="close-btn">&times;</span>
             <h2>请输入密钥</h2>
             <input type="password" id="key-input" placeholder="输入密钥">
             <button id="submit-key">提交</button>

@@ -53,16 +53,63 @@ button:hover {
 
 #file-list {
     margin-top: 2rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
 }
 
 .file-item {
-    background: #f9f9f9;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border-radius: 4px;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #eee;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: background-color 0.2s;
+}
+
+.file-item:last-child {
+    border-bottom: none;
+}
+
+.file-item:hover {
+    background-color: #f5f5f5;
+}
+
+.folder-name, .file-name {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.folder-name i, .file-name i {
+    margin-right: 10px;
+    font-size: 1.2em;
+}
+
+.folder-name i {
+    color: #f1c40f;
+}
+
+.file-name i {
+    color: #3498db;
+}
+
+.file-actions button {
+    padding: 5px 10px;
+    margin-left: 5px;
+    font-size: 0.9em;
+}
+
+.back-button {
+    background-color: #f1f8ff;
+    cursor: pointer;
+}
+
+.current-path {
+    padding: 0.5rem 1rem;
+    background-color: #e9ecef;
+    border-bottom: 1px solid #ddd;
+    font-weight: bold;
 }
 
 .file-info {
@@ -512,4 +559,19 @@ button:hover {
 
 #new-folder-form button {
     margin-right: 0.5rem;
+}
+
+.close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
 }

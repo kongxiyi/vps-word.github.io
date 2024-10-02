@@ -60,7 +60,10 @@ function addEventListenerSafely(id, event, handler, isQuery = false) {
 }
 
 function showLoading(show = true) {
-    document.getElementById('loading').style.display = show ? 'block' : 'none';
+    const loadingElement = document.getElementById('loading');
+    if (loadingElement) {
+        loadingElement.style.display = show ? 'block' : 'none';
+    }
 }
 
 function showMessage(message, isError = false, duration = 5000) {
@@ -116,6 +119,7 @@ function showKeyDialog() {
         const dialog = document.getElementById('key-dialog');
         const submitButton = document.getElementById('submit-key');
         const keyInput = document.getElementById('key-input');
+        const closeBtn = dialog.querySelector('.close-btn');
 
         dialog.style.display = 'block';
 
@@ -128,6 +132,21 @@ function showKeyDialog() {
                 resolve();
             } else {
                 reject(new Error('请输入有效的私钥'));
+            }
+        };
+
+        closeBtn.onclick = () => {
+            dialog.style.display = 'none';
+            keyInput.value = '';
+            reject(new Error('用户取消了操作'));
+        };
+
+        // 点击对话框外部区域关闭对话框
+        window.onclick = (event) => {
+            if (event.target === dialog) {
+                dialog.style.display = 'none';
+                keyInput.value = '';
+                reject(new Error('用户取消了操作'));
             }
         };
     });
@@ -165,7 +184,8 @@ async function authenticate() {
     }
 }
 
-async function fetchFiles(path = ROOT_FOLDER) {
+async function fetchFiles(path = currentPath) {
+    showLoading(true);
     try {
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
             headers: {
@@ -184,11 +204,66 @@ async function fetchFiles(path = ROOT_FOLDER) {
         }
         
         const files = await response.json();
-        fileTree = buildFileTree(files); // 保存文件树到全局变量
-        displayFileTree(fileTree);
+        displayFiles(files);
     } catch (error) {
         showMessage('无法获取文件列表: ' + error.message, true);
+    } finally {
+        showLoading(false);
     }
+}
+
+function displayFiles(files) {
+    const fileList = document.getElementById('file-list');
+    fileList.innerHTML = '';
+
+    // 添加返回上一级按钮
+    if (currentPath !== ROOT_FOLDER) {
+        const backButton = document.createElement('div');
+        backButton.className = 'file-item back-button';
+        backButton.innerHTML = '<span class="folder-name"><i class="fas fa-arrow-left"></i> 返回上一级</span>';
+        backButton.addEventListener('click', () => {
+            currentPath = currentPath.split('/').slice(0, -1).join('/') || ROOT_FOLDER;
+            fetchFiles(currentPath);
+        });
+        fileList.appendChild(backButton);
+    }
+
+    // 显示当前路径
+    const pathDisplay = document.createElement('div');
+    pathDisplay.className = 'current-path';
+    pathDisplay.textContent = `当前路径: ${currentPath}`;
+    fileList.appendChild(pathDisplay);
+
+    files.sort((a, b) => {
+        if (a.type === b.type) return a.name.localeCompare(b.name);
+        return a.type === 'dir' ? -1 : 1;
+    });
+
+    files.forEach(file => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        const icon = file.type === 'dir' ? '<i class="fas fa-folder"></i>' : '<i class="fas fa-file"></i>';
+        fileItem.innerHTML = `
+            <span class="${file.type === 'dir' ? 'folder-name' : 'file-name'}">
+                ${icon}
+                ${file.name}
+            </span>
+            <div class="file-actions">
+                ${file.type === 'file' ? `
+                    <button onclick="openFile('${file.path}')">查看</button>
+                    <button onclick="deleteFile('${file.path}')">删除</button>
+                ` : `
+                    <button onclick="openFolder('${file.path}')">打开</button>
+                `}
+            </div>
+        `;
+        fileList.appendChild(fileItem);
+    });
+}
+
+function openFolder(path) {
+    currentPath = path;
+    fetchFiles(path);
 }
 
 function buildFileTree(files) {
@@ -213,50 +288,74 @@ function buildFileTree(files) {
 
 function displayFileTree(tree, parentElement = document.getElementById('file-list'), path = '') {
     parentElement.innerHTML = ''; // 清空现有内容
+    
+    // 将项目分为文件夹和文件
+    const folders = [];
+    const files = [];
+    
     for (const [name, item] of Object.entries(tree)) {
+        if (item.type === 'dir') {
+            folders.push({ name, item });
+        } else {
+            files.push({ name, item });
+        }
+    }
+    
+    // 对文件夹和文件分别进行字母排序
+    folders.sort((a, b) => a.name.localeCompare(b.name));
+    files.sort((a, b) => a.name.localeCompare(b.name));
+    
+    // 先显示文件夹
+    for (const { name, item } of folders) {
         const element = document.createElement('div');
         element.className = 'tree-item';
         const fullPath = path ? `${path}/${name}` : name;
         
-        if (item.type === 'dir') {
-            // 这是一个文件夹
-            element.innerHTML = `
-                <span class="folder-name">
-                    ${SVG_ICONS.folder}
-                    ${name}
-                    ${SVG_ICONS.chevronRight}
-                </span>
-                <div class="folder-content" style="display: none;"></div>
-            `;
-            const folderName = element.querySelector('.folder-name');
-            const folderContent = element.querySelector('.folder-content');
-            const chevron = folderName.querySelector('svg:last-child');
-            
-            folderName.addEventListener('click', () => {
-                if (folderContent.style.display === 'none') {
-                    folderContent.style.display = 'block';
-                    chevron.outerHTML = SVG_ICONS.chevronDown;
-                    if (folderContent.children.length === 0) {
-                        displayFileTree(item.children, folderContent, fullPath);
-                    }
-                } else {
-                    folderContent.style.display = 'none';
-                    chevron.outerHTML = SVG_ICONS.chevronRight;
+        element.innerHTML = `
+            <span class="folder-name">
+                ${SVG_ICONS.folder}
+                ${name}
+                ${SVG_ICONS.chevronRight}
+            </span>
+            <div class="folder-content" style="display: none;"></div>
+        `;
+        const folderName = element.querySelector('.folder-name');
+        const folderContent = element.querySelector('.folder-content');
+        const chevron = folderName.querySelector('svg:last-child');
+        
+        folderName.addEventListener('click', () => {
+            if (folderContent.style.display === 'none') {
+                folderContent.style.display = 'block';
+                chevron.outerHTML = SVG_ICONS.chevronDown;
+                if (folderContent.children.length === 0) {
+                    displayFileTree(item.children, folderContent, fullPath);
                 }
-            });
-        } else {
-            // 这是一个文件
-            element.innerHTML = `
-                <span class="file-name">
-                    ${SVG_ICONS.file}
-                    ${name}
-                </span>
-                <div class="file-actions">
-                    <button onclick="openFile('${fullPath}')">查看</button>
-                    <button onclick="deleteFile('${fullPath}')">删除</button>
-                </div>
-            `;
-        }
+            } else {
+                folderContent.style.display = 'none';
+                chevron.outerHTML = SVG_ICONS.chevronRight;
+            }
+        });
+        
+        parentElement.appendChild(element);
+    }
+    
+    // 然后显示文件
+    for (const { name, item } of files) {
+        const element = document.createElement('div');
+        element.className = 'tree-item';
+        const fullPath = path ? `${path}/${name}` : name;
+        
+        element.innerHTML = `
+            <span class="file-name">
+                ${SVG_ICONS.file}
+                ${name}
+            </span>
+            <div class="file-actions">
+                <button onclick="openFile('${fullPath}')">查看</button>
+                <button onclick="deleteFile('${fullPath}')">删除</button>
+            </div>
+        `;
+        
         parentElement.appendChild(element);
     }
 }
@@ -300,7 +399,9 @@ async function openFile(filePath) {
         currentFilePath = filePath;
         isEditing = false;
     } catch (error) {
-        showMessage('无法打开文件: ' + error.message, true);
+        if (error.message !== '用户取消了操作') {
+            showMessage('无法打开文件: ' + error.message, true);
+        }
     } finally {
         showLoading(false);
     }
@@ -630,9 +731,9 @@ async function deleteFile(filePath) {
 }
 
 async function refreshFiles() {
-    showLoading();
+    showLoading(true);
     try {
-        await fetchFiles();
+        const files = await fetchFiles();
         showMessage('文件列表已刷新');
     } catch (error) {
         showMessage('刷新文件列表失败: ' + error.message, true);
