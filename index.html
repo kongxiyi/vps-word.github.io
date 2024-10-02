@@ -3,17 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>加密文件管理器</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-    <!-- 删除了 Octokit 的脚本引用 -->
+    <title>GitHub文件管理系统</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>加密文件管理器</h1>
+    <h1>GitHub文件管理系统</h1>
+    <div id="auth">
+        <input type="text" id="token-input" placeholder="输入GitHub个人访问令牌">
+        <button id="auth-btn">认证</button>
+    </div>
     <div id="file-list"></div>
-    <button id="new-file">新建文件</button>
+    <div id="file-actions">
+        <input type="text" id="new-file-name" placeholder="新文件名">
+        <button id="new-file-btn">新建文件</button>
+    </div>
     <div id="file-content">
-        <textarea id="editor" style="display:none;"></textarea>
-        <button id="save" style="display:none;">保存</button>
+        <textarea id="file-editor"></textarea>
+        <button id="save-btn" style="display: none;">保存修改</button>
     </div>
     <script src="app.js"></script>
 </body>
