@@ -1,6 +1,23 @@
+const publicKey = `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmCGKxrlsfGHOwTOL51Xk
+pP9SNaBv2gpMNpxX3+W47uatEGCKBCkQ/skqgvn4cNxrPiW+qoV1QQzhZbxJztz7
+Te8qgIp59Z+tbHaOP6L/p+jnKJxrDxyWHstJ7kT/MwDy97xrN3C1ktDcTZML2sM2
+iBW+nh3WM/Ks+FIKW9KkvYNZFsJ3Eu3zzdR9oZHq/a87blhnQZPUQzLy4cc32fIn
+3Gwx3ymOA4xGNjcLz5XAQEnnlnsnIok2dhE6SjNIDjMZ2CsgFYTc8fqkCo4E09rR
+DrG87bmknK5QIiyNEmcsMjiXJcUrquhBDmOQ8HcDE3IQMG7F9vK8Z2rUAZl4N5Qy
+hQIDAQAB
+-----END PUBLIC KEY-----`;
+
+let privateKey = '';
+
 let token = '';
 const owner = 'kongxiyi';
 const repo = 'vps-word';
+
+let encryptionKey = '';
+let isEditing = false;
+
+let originalContent = '';
 
 document.addEventListener('DOMContentLoaded', function() {
     addEventListenerSafely('auth-btn', 'click', authenticate);
@@ -31,7 +48,7 @@ function showLoading(show = true) {
     document.getElementById('loading').style.display = show ? 'block' : 'none';
 }
 
-function showMessage(message, isError = false) {
+function showMessage(message, isError = false, duration = 5000) {
     const notificationElement = document.getElementById('notification');
     const contentElement = notificationElement.querySelector('.notification-content');
     contentElement.textContent = message;
@@ -43,10 +60,11 @@ function showMessage(message, isError = false) {
         clearTimeout(notificationElement.timeoutId);
     }
     
-    // 设置新的定时器
-    notificationElement.timeoutId = setTimeout(() => {
-        notificationElement.classList.remove('show');
-    }, 5000);
+    if (duration > 0) {
+        notificationElement.timeoutId = setTimeout(() => {
+            notificationElement.classList.remove('show');
+        }, duration);
+    }
 
     if (isError) {
         showErrorAlert(message);
@@ -55,6 +73,49 @@ function showMessage(message, isError = false) {
 
 function showErrorAlert(errorMessage) {
     alert(`错误: ${errorMessage}`);
+}
+
+// 替换原有的加密和解密函数
+function encrypt(content) {
+    const encrypt = new JSEncrypt();
+    encrypt.setPublicKey(publicKey);
+    return encrypt.encrypt(content);
+}
+
+function decrypt(ciphertext) {
+    if (!privateKey) {
+        throw new Error('请先输入私钥');
+    }
+    const decrypt = new JSEncrypt();
+    decrypt.setPrivateKey(privateKey);
+    const decrypted = decrypt.decrypt(ciphertext);
+    if (decrypted === null) {
+        throw new Error('解密失败，请检查私钥是否正确');
+    }
+    return decrypted;
+}
+
+// 修改 showKeyDialog 函数
+function showKeyDialog() {
+    return new Promise((resolve, reject) => {
+        const dialog = document.getElementById('key-dialog');
+        const submitButton = document.getElementById('submit-key');
+        const keyInput = document.getElementById('key-input');
+
+        dialog.style.display = 'block';
+
+        submitButton.onclick = () => {
+            const key = keyInput.value;
+            if (key) {
+                privateKey = key;
+                dialog.style.display = 'none';
+                keyInput.value = '';
+                resolve();
+            } else {
+                reject(new Error('请输入有效的私钥'));
+            }
+        };
+    });
 }
 
 async function authenticate() {
@@ -80,6 +141,7 @@ async function authenticate() {
         document.getElementById('file-actions').style.display = 'block';
         document.getElementById('auth').style.display = 'none';
         showMessage('认证成功！');
+        
         fetchFiles();
     } catch (error) {
         showMessage('认证失败：' + error.message, true);
@@ -143,6 +205,7 @@ function formatFileSize(bytes) {
 async function openFile(filePath) {
     showLoading();
     try {
+        await showKeyDialog(); // 每次打开文件都请求密钥
         const fullPath = filePath.startsWith('files/') ? filePath : `files/${filePath}`;
         
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${fullPath}`, {
@@ -152,11 +215,23 @@ async function openFile(filePath) {
             }
         });
         const fileData = await response.json();
-        const content = atob(fileData.content);
+        const encodedContent = fileData.content;
+        const decodedContent = atob(encodedContent);
+        
+        let content;
+        try {
+            content = decrypt(decodedContent);
+        } catch (decryptError) {
+            showMessage('解密失败：' + decryptError.message, true);
+            content = decodedContent;
+        }
+
         document.getElementById('file-editor').value = content;
+        originalContent = content; // 保存原始内容
         document.getElementById('file-content').style.display = 'block';
         viewFile(filePath);  // 默认以查看模式打开
         currentFilePath = filePath;
+        isEditing = false;
     } catch (error) {
         showMessage('无法打开文件: ' + error.message, true);
     } finally {
@@ -173,6 +248,7 @@ function viewFile(filePath) {
     document.getElementById('view-btn').style.display = 'none';
     document.getElementById('edit-btn').style.display = 'inline-block';
     document.getElementById('save-btn').style.display = 'none';
+    isEditing = false;
 }
 
 function editFile(filePath) {
@@ -184,6 +260,7 @@ function editFile(filePath) {
     document.getElementById('view-btn').style.display = 'inline-block';
     document.getElementById('edit-btn').style.display = 'none';
     document.getElementById('save-btn').style.display = 'inline-block';
+    isEditing = true;
 }
 
 function closeFile() {
@@ -191,6 +268,7 @@ function closeFile() {
     currentFilePath = '';
     document.getElementById('view-btn').style.display = 'inline-block';
     document.getElementById('edit-btn').style.display = 'inline-block';
+    isEditing = false;
 }
 
 function showNewFileForm() {
@@ -242,7 +320,25 @@ async function saveNewFile() {
 async function saveFile(filePath) {
     showLoading();
     const content = document.getElementById('file-editor').value;
+    
+    // 检查内容是否发生变化
+    if (content === originalContent) {
+        showMessage('文件内容未发生变化，无需保存', false);
+        showLoading(false);
+        return;
+    }
+    
     try {
+        if (!isEditing) {
+            await showKeyDialog();
+        }
+        let encryptedContent;
+        try {
+            encryptedContent = encrypt(content);
+        } catch (encryptError) {
+            showMessage('加密失败，将保存原始内容', true);
+            encryptedContent = content;
+        }
         const fullPath = filePath.startsWith('files/') ? filePath : `files/${filePath}`;
         
         if (isCreatingNewFile) {
@@ -256,7 +352,7 @@ async function saveFile(filePath) {
                 },
                 body: JSON.stringify({
                     message: `Create ${filePath}`,
-                    content: btoa(unescape(encodeURIComponent(content)))
+                    content: btoa(unescape(encodeURIComponent(encryptedContent)))
                 })
             });
             if (response.ok) {
@@ -285,12 +381,13 @@ async function saveFile(filePath) {
                 },
                 body: JSON.stringify({
                     message: `Update ${filePath}`,
-                    content: btoa(unescape(encodeURIComponent(content))),
+                    content: btoa(unescape(encodeURIComponent(encryptedContent))),
                     sha: fileData.sha
                 })
             });
             if (response.ok) {
                 showMessage('文件已保存');
+                originalContent = content; // 更新原始内容
             } else {
                 throw new Error('保存文件失败');
             }

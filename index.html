@@ -6,6 +6,9 @@
     <title>GitHub文件管理系统</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.2.1/jsencrypt.min.js"></script> -->
+     <script src="./jsencrypt.js"></script>
 </head>
 <body>
     <div class="container">
@@ -44,6 +47,13 @@
     <div id="notification" class="notification">
         <div class="notification-content"></div>
         <button class="notification-close">&times;</button>
+    </div>
+    <div id="key-dialog" class="modal">
+        <div class="modal-content">
+            <h2>请输入密钥</h2>
+            <input type="password" id="key-input" placeholder="输入密钥">
+            <button id="submit-key">提交</button>
+        </div>
     </div>
 </body>
 </html>
