@@ -12,7 +12,7 @@ let privateKey = '';
 
 let token = '';
 const owner = 'kongxiyi';
-const repo = 'vps-word';
+const repo = 'vps-word.github.io';
 
 let encryptionKey = '';
 let isEditing = false;
