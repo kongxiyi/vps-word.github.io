@@ -7,37 +7,36 @@ document.getElementById('new-file-btn').addEventListener('click', createNewFile)
 document.getElementById('save-btn').addEventListener('click', saveFile);
 
 function authenticate() {
-    token = document.getElementById('token-input').value;
+    token = document.getElementById('token-input').value.trim();
+    if (!token) {
+        alert('请输入有效的GitHub个人访问令牌');
+        return;
+    }
     fetchFiles();
 }
 
 async function fetchFiles() {
     try {
-        // 首先尝试获取 'files' 目录的内容
-        let response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/files`, {
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents`, {
             headers: {
-                'Authorization': `token ${token}`
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
             }
         });
         
-        // 如果 'files' 目录不存在，则获取根目录的内容
-        if (!response.ok && response.status === 404) {
-            response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents`, {
-                headers: {
-                    'Authorization': `token ${token}`
-                }
-            });
-        }
-        
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            if (response.status === 401) {
+                throw new Error('认证失败。请检查您的访问令牌是否正确。');
+            } else {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
         }
         
         const files = await response.json();
         displayFiles(files);
     } catch (error) {
         console.error('无法获取文件列表:', error);
-        alert('获取文件列表失败。请检查您的访问令牌是否正确，以及是否有足够的权限。');
+        alert(error.message || '获取文件列表失败。请检查您的访问令牌是否正确，以及是否有足够的权限。');
     }
 }
 
@@ -65,7 +64,8 @@ async function viewFile(filePath) {
     try {
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
             headers: {
-                'Authorization': `token ${token}`
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
             }
         });
         const fileData = await response.json();
@@ -84,7 +84,8 @@ async function saveFile(filePath) {
     try {
         const fileResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
             headers: {
-                'Authorization': `token ${token}`
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
             }
         });
         const fileData = await fileResponse.json();
@@ -105,7 +106,8 @@ async function saveFile(filePath) {
             alert('文件已保存');
             fetchFiles();
         } else {
-            throw new Error('保存文件失败');
+            const errorData = await response.json();
+            throw new Error(errorData.message || '保存文件失败');
         }
     } catch (error) {
         console.error('无法保存文件:', error);
@@ -124,6 +126,7 @@ async function createNewFile() {
             method: 'PUT',
             headers: {
                 'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json',
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -135,11 +138,12 @@ async function createNewFile() {
             alert('文件已创建');
             fetchFiles();
         } else {
-            throw new Error('创建文件失败');
+            const errorData = await response.json();
+            throw new Error(errorData.message || '创建文件失败');
         }
     } catch (error) {
         console.error('无法创建文件:', error);
-        alert('创建文件失败。');
+        alert(error.message || '创建文件失败。');
     }
 }
 
@@ -148,7 +152,8 @@ async function deleteFile(filePath) {
     try {
         const fileResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
             headers: {
-                'Authorization': `token ${token}`
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
             }
         });
         const fileData = await fileResponse.json();
@@ -168,7 +173,8 @@ async function deleteFile(filePath) {
             alert('文件已删除');
             fetchFiles();
         } else {
-            throw new Error('删除文件失败');
+            const errorData = await response.json();
+            throw new Error(errorData.message || '删除文件失败');
         }
     } catch (error) {
         console.error('无法删除文件:', error);
@@ -176,4 +182,17 @@ async function deleteFile(filePath) {
     }
 }
 
-// ... 其他代码保持不变 ...
+function showError(message) {
+    const errorElement = document.getElementById('error-message');
+    errorElement.textContent = message;
+    errorElement.style.display = 'block';
+    setTimeout(() => {
+        errorElement.style.display = 'none';
+    }, 5000);
+}
+
+// 在所有的 alert 调用中，使用 showError 替代
+// 例如：
+// alert('创建文件失败。'); 
+// 变为：
+// showError('创建文件失败。');
