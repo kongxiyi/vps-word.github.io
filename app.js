@@ -290,6 +290,9 @@ async function saveNewFile() {
     }
     showLoading();
     try {
+        // 使用公钥加密内容
+        const encryptedContent = encrypt(content);
+        
         const fullPath = `files/${fileName}`;
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${fullPath}`, {
             method: 'PUT',
@@ -300,11 +303,11 @@ async function saveNewFile() {
             },
             body: JSON.stringify({
                 message: `Create ${fileName}`,
-                content: btoa(unescape(encodeURIComponent(content)))
+                content: btoa(unescape(encodeURIComponent(encryptedContent)))
             })
         });
         if (response.ok) {
-            showMessage('新文件已创建并保存');
+            showMessage('新文件已创建并保存（已加密）');
             hideNewFileForm();
             fetchFiles();
         } else {
