@@ -575,3 +575,12 @@ button:hover {
     text-decoration: none;
     cursor: pointer;
 }
+
+.path-part {
+    cursor: pointer;
+    color: #007bff;
+}
+
+.path-part:hover {
+    text-decoration: underline;
+}

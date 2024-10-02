@@ -204,6 +204,7 @@ async function fetchFiles(path = currentPath) {
         }
         
         const files = await response.json();
+        fileTree = buildFileTree(files, path); // 构建文件树
         displayFiles(files);
     } catch (error) {
         showMessage('无法获取文件列表: ' + error.message, true);
@@ -228,10 +229,27 @@ function displayFiles(files) {
         fileList.appendChild(backButton);
     }
 
-    // 显示当前路径
+    // 显示可点击的当前路径
     const pathDisplay = document.createElement('div');
     pathDisplay.className = 'current-path';
-    pathDisplay.textContent = `当前路径: ${currentPath}`;
+    const pathParts = currentPath.split('/');
+    let pathHtml = '当前路径: ';
+    let accumulatedPath = '';
+    pathParts.forEach((part, index) => {
+        accumulatedPath += (index === 0 ? '' : '/') + part;
+        pathHtml += `<span class="path-part" data-path="${accumulatedPath}">${part}</span>`;
+        if (index < pathParts.length - 1) {
+            pathHtml += ' / ';
+        }
+    });
+    pathDisplay.innerHTML = pathHtml;
+    pathDisplay.addEventListener('click', (e) => {
+        if (e.target.classList.contains('path-part')) {
+            const newPath = e.target.getAttribute('data-path');
+            currentPath = newPath;
+            fetchFiles(newPath);
+        }
+    });
     fileList.appendChild(pathDisplay);
 
     files.sort((a, b) => {
@@ -250,7 +268,8 @@ function displayFiles(files) {
             </span>
             <div class="file-actions">
                 ${file.type === 'dir' 
-                    ? `<button onclick="openFolder('${file.path}')">打开</button>`
+                    ? `<button onclick="openFolder('${file.path}')">打开</button>
+                       <button onclick="deleteFolder('${file.path}')">删除</button>`
                     : `<button onclick="openFile('${file.path}')">查看</button>
                        <button onclick="deleteFile('${file.path}')">删除</button>`
                 }
@@ -272,22 +291,14 @@ function openFolder(path) {
     fetchFiles(path);
 }
 
-function buildFileTree(files) {
+function buildFileTree(files, basePath) {
     const tree = {};
     files.forEach(file => {
-        const parts = file.path.split('/');
-        let currentLevel = tree;
-        parts.forEach((part, index) => {
-            if (index === 0 && part === ROOT_FOLDER) return; // 跳过根目录
-            if (!currentLevel[part]) {
-                currentLevel[part] = index === parts.length - 1 ? file : { type: 'dir', children: {} };
-            }
-            if (index === parts.length - 1) {
-                currentLevel[part] = file;
-            } else {
-                currentLevel = currentLevel[part].children;
-            }
-        });
+        if (file.type === 'dir') {
+            tree[file.name] = { type: 'dir', path: file.path, children: {} };
+        } else {
+            tree[file.name] = { type: 'file', path: file.path };
+        }
     });
     return tree;
 }
@@ -459,14 +470,21 @@ function showForm(formType) {
 }
 
 function hideAllForms() {
-    const fileForm = document.getElementById('new-file-form');
-    const folderForm = document.getElementById('new-folder-form');
-    if (fileForm) {
-        fileForm.remove();
-    }
-    if (folderForm) {
-        folderForm.remove();
-    }
+    const forms = ['new-file-form', 'new-folder-form'];
+    forms.forEach(formId => {
+        const form = document.getElementById(formId);
+        if (form) {
+            form.style.display = 'none';
+            // 清空表单中的输入
+            form.querySelectorAll('input, textarea').forEach(input => {
+                input.value = '';
+            });
+            // 重置选择框到默认选项
+            form.querySelectorAll('select').forEach(select => {
+                select.selectedIndex = 0;
+            });
+        }
+    });
     currentForm = null;
 }
 
@@ -512,20 +530,21 @@ function hideForm(formType) {
     }
 }
 
-function showNewFileForm() {
+async function showNewFileForm() {
     if (currentForm === 'file') {
         return;
     }
     hideAllForms();
+    const existingForm = document.getElementById('new-file-form');
+    if (existingForm) {
+        existingForm.remove(); // 移除现有的表单
+    }
     const form = document.createElement('div');
     form.id = 'new-file-form';
     form.innerHTML = `
         <div class="form-group">
-            <label for="new-file-parent-select">父文件夹：</label>
-            <select id="new-file-parent-select">
-                <option value="${ROOT_FOLDER}">根目录</option>
-                ${generateFolderOptions(ROOT_FOLDER)}
-            </select>
+            <label for="new-file-parent-display">当前路径：</label>
+            <input type="text" id="new-file-parent-display" value="${currentPath}" readonly>
         </div>
         <div class="form-group">
             <label for="new-file-name-input">文件名：</label>
@@ -545,20 +564,21 @@ function showNewFileForm() {
     currentForm = 'file';
 }
 
-function showNewFolderForm() {
+async function showNewFolderForm() {
     if (currentForm === 'folder') {
         return;
     }
     hideAllForms();
+    const existingForm = document.getElementById('new-folder-form');
+    if (existingForm) {
+        existingForm.remove(); // 移除现有的表单
+    }
     const form = document.createElement('div');
     form.id = 'new-folder-form';
     form.innerHTML = `
         <div class="form-group">
-            <label for="new-folder-parent-select">父文件夹：</label>
-            <select id="new-folder-parent-select">
-                <option value="${ROOT_FOLDER}">根目录</option>
-                ${generateFolderOptions(ROOT_FOLDER)}
-            </select>
+            <label for="new-folder-parent-display">当前路径：</label>
+            <input type="text" id="new-folder-parent-display" value="${currentPath}" readonly>
         </div>
         <div class="form-group">
             <label for="new-folder-name-input">文件夹名：</label>
@@ -577,7 +597,6 @@ function showNewFolderForm() {
 async function saveNewFile() {
     const fileName = document.getElementById('new-file-name-input').value.trim();
     const content = document.getElementById('new-file-content-textarea').value;
-    const parentFolder = document.getElementById('new-file-parent-select').value;
     if (!fileName) {
         showMessage('请输入文件名', true);
         return;
@@ -585,7 +604,7 @@ async function saveNewFile() {
     showLoading();
     try {
         const encryptedContent = encrypt(content);
-        const fullPath = `${parentFolder}/${fileName}`;
+        const fullPath = `${currentPath}/${fileName}`;
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${fullPath}`, {
             method: 'PUT',
             headers: {
@@ -599,9 +618,9 @@ async function saveNewFile() {
             })
         });
         if (response.ok) {
-            showMessage('新文件已创建并保存（已加密）');
-            hideAllForms();
-            fetchFiles();
+            showMessage('新文件已创建并保存（已加密），请注意文件显示更新需要等待0~3min');
+            hideAllForms(); // 自动关闭表单
+            fetchFiles(currentPath);
         } else {
             throw new Error('创建文件失败');
         }
@@ -696,8 +715,8 @@ async function saveFile(filePath) {
     }
 }
 
-async function deleteFile(filePath) {
-    if (!confirm(`确定要删除 ${filePath} 吗？`)) return;
+async function deleteFile(filePath, showConfirm = true) {
+    if (showConfirm && !confirm(`确定要删除 ${filePath} 吗？`)) return;
     showLoading();
     try {
         const fullPath = filePath.startsWith(ROOT_FOLDER + '/') ? filePath : `${ROOT_FOLDER}/${filePath}`;
@@ -708,6 +727,15 @@ async function deleteFile(filePath) {
                 'Accept': 'application/vnd.github.v3+json'
             }
         });
+
+        if (!fileResponse.ok) {
+            if (fileResponse.status === 404) {
+                console.log(`File not found: ${fullPath}`);
+                return; // 如果文件不存在，直接返回
+            }
+            throw new Error(`Failed to fetch file info: ${fileResponse.statusText}`);
+        }
+
         const fileData = await fileResponse.json();
         
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${fullPath}`, {
@@ -722,15 +750,19 @@ async function deleteFile(filePath) {
                 sha: fileData.sha
             })
         });
-        if (response.ok) {
+        if (!response.ok) {
+            throw new Error(`删除文件失败: ${response.statusText}`);
+        }
+        if (showConfirm) {
             showMessage('文件已删除');
             fetchFiles();
             closeFile();
-        } else {
-            throw new Error('删除文件失败');
         }
     } catch (error) {
-        showMessage('无法删除文件: ' + error.message, true);
+        console.error('Error deleting file:', error);
+        if (showConfirm) {
+            showMessage('无法删除文件: ' + error.message, true);
+        }
     } finally {
         showLoading(false);
     }
@@ -764,14 +796,13 @@ function displayNoFilesMessage() {
 
 async function createNewFolder() {
     const folderName = document.getElementById('new-folder-name-input').value.trim();
-    const parentFolder = document.getElementById('new-folder-parent-select').value;
     if (!folderName) {
         showMessage('请输入文件夹名称', true);
         return;
     }
     
     try {
-        const fullPath = `${parentFolder}/${folderName}/.gitkeep`;
+        const fullPath = `${currentPath}/${folderName}/.gitkeep`;
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${fullPath}`, {
             method: 'PUT',
             headers: {
@@ -786,8 +817,8 @@ async function createNewFolder() {
         
         if (response.ok) {
             showMessage(`文件夹 ${folderName} 已创建`);
-            fetchFiles(); // 刷新文件列表
-            hideAllForms(); // 隐藏表单
+            hideAllForms(); // 自动关闭表单
+            fetchFiles(currentPath); // 刷新文件列表
         } else {
             throw new Error('创建文件夹失败');
         }
@@ -796,15 +827,14 @@ async function createNewFolder() {
     }
 }
 
-function generateFolderOptions(path, prefix = '') {
+function generateFolderOptions(tree = fileTree, path = ROOT_FOLDER, prefix = '') {
     let options = '';
-    const files = getFilesInPath(path);
-    if (files) {
-        for (const [name, item] of Object.entries(files)) {
-            if (item.type === 'dir') {
-                const fullPath = `${path}/${name}`;
-                options += `<option value="${fullPath}">${prefix}${name}</option>`;
-                options += generateFolderOptions(fullPath, prefix + '-- ');
+    for (const [name, item] of Object.entries(tree)) {
+        if (item.type === 'dir') {
+            const fullPath = `${path}/${name}`;
+            options += `<option value="${fullPath}">${prefix}${name}</option>`;
+            if (item.children) {
+                options += generateFolderOptions(item.children, fullPath, prefix + '-- ');
             }
         }
     }
@@ -831,4 +861,67 @@ function hideNewFileForm() {
 
 function hideNewFolderForm() {
     hideForm('folder');
+}
+
+// 添加删除文件夹的函数
+async function deleteFolder(folderPath) {
+    if (!confirm(`确定要删除文件夹 ${folderPath} 及其所有内容吗？`)) return;
+    showLoading();
+    try {
+        await deleteFolderRecursive(folderPath);
+        showMessage('文件夹已删除');
+        fetchFiles(currentPath);
+    } catch (error) {
+        showMessage('无法删除文件夹: ' + error.message, true);
+    } finally {
+        showLoading(false);
+    }
+}
+
+// 递归删除文件夹及其内容
+async function deleteFolderRecursive(folderPath) {
+    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${folderPath}`, {
+        headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+        }
+    });
+    const contents = await response.json();
+
+    for (const item of contents) {
+        if (item.type === 'file') {
+            await deleteFile(item.path, false);
+        } else if (item.type === 'dir') {
+            await deleteFolderRecursive(item.path);
+        }
+    }
+
+    // 尝试删除 .gitkeep 文件，但如果失败也不中断过程
+    try {
+        const gitkeepPath = `${folderPath}/.gitkeep`;
+        await deleteFile(gitkeepPath, false);
+    } catch (error) {
+        console.log(`Failed to delete .gitkeep in ${folderPath}: ${error.message}`);
+    }
+}
+
+async function updateFileTree() {
+    try {
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${ROOT_FOLDER}`, {
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const files = await response.json();
+        fileTree = buildFileTree(files, ROOT_FOLDER);
+    } catch (error) {
+        console.error('Error updating file tree:', error);
+        showMessage('无法更新文件树: ' + error.message, true);
+    }
 }
