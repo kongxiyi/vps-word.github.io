@@ -17,7 +17,7 @@ function authenticate() {
 
 async function fetchFiles() {
     try {
-        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents`, {
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/files`, {
             headers: {
                 'Authorization': `token ${token}`,
                 'Accept': 'application/vnd.github.v3+json'
@@ -27,6 +27,8 @@ async function fetchFiles() {
         if (!response.ok) {
             if (response.status === 401) {
                 throw new Error('认证失败。请检查您的访问令牌是否正确。');
+            } else if (response.status === 404) {
+                throw new Error('files 目录不存在。请在仓库中创建此目录。');
             } else {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -36,7 +38,7 @@ async function fetchFiles() {
         displayFiles(files);
     } catch (error) {
         console.error('无法获取文件列表:', error);
-        alert(error.message || '获取文件列表失败。请检查您的访问令牌是否正确，以及是否有足够的权限。');
+        showError(error.message || '获取文件列表失败。请检查您的访问令牌是否正确，以及是否有足够的权限。');
     }
 }
 
@@ -49,9 +51,9 @@ function displayFiles(files) {
             fileItem.className = 'file-item';
             fileItem.innerHTML = `
                 <span>${file.name}</span>
-                <button onclick="viewFile('${file.path}')">查看</button>
-                <button onclick="editFile('${file.path}')">编辑</button>
-                <button onclick="deleteFile('${file.path}')">删除</button>
+                <button onclick="viewFile('${file.name}')">查看</button>
+                <button onclick="editFile('${file.name}')">编辑</button>
+                <button onclick="deleteFile('${file.name}')">删除</button>
             `;
             fileList.appendChild(fileItem);
         }
@@ -62,7 +64,7 @@ function displayFiles(files) {
 
 async function viewFile(filePath) {
     try {
-        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/files/${filePath}`, {
             headers: {
                 'Authorization': `token ${token}`,
                 'Accept': 'application/vnd.github.v3+json'
@@ -75,7 +77,7 @@ async function viewFile(filePath) {
         document.getElementById('save-btn').onclick = () => saveFile(filePath);
     } catch (error) {
         console.error('无法查看文件:', error);
-        alert('查看文件失败。');
+        showError('查看文件失败。');
     }
 }
 
@@ -118,11 +120,11 @@ async function saveFile(filePath) {
 async function createNewFile() {
     const fileName = document.getElementById('new-file-name').value;
     if (!fileName) {
-        alert('请输入文件名');
+        showError('请输入文件名');
         return;
     }
     try {
-        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${fileName}`, {
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/files/${fileName}`, {
             method: 'PUT',
             headers: {
                 'Authorization': `token ${token}`,
@@ -130,12 +132,12 @@ async function createNewFile() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                message: `Create ${fileName}`,
+                message: `Create ${fileName} in files directory`,
                 content: btoa('')
             })
         });
         if (response.ok) {
-            alert('文件已创建');
+            showError('文件已创建', 'green');
             fetchFiles();
         } else {
             const errorData = await response.json();
@@ -143,7 +145,7 @@ async function createNewFile() {
         }
     } catch (error) {
         console.error('无法创建文件:', error);
-        alert(error.message || '创建文件失败。');
+        showError(error.message || '创建文件失败。');
     }
 }
 
