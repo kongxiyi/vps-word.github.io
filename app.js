@@ -249,14 +249,20 @@ function displayFiles(files) {
                 ${file.name}
             </span>
             <div class="file-actions">
-                ${file.type === 'file' ? `
-                    <button onclick="openFile('${file.path}')">查看</button>
-                    <button onclick="deleteFile('${file.path}')">删除</button>
-                ` : `
-                    <button onclick="openFolder('${file.path}')">打开</button>
-                `}
+                ${file.type === 'dir' 
+                    ? `<button onclick="openFolder('${file.path}')">打开</button>`
+                    : `<button onclick="openFile('${file.path}')">查看</button>
+                       <button onclick="deleteFile('${file.path}')">删除</button>`
+                }
             </div>
         `;
+        
+        if (file.type === 'dir') {
+            fileItem.querySelector('.folder-name').addEventListener('click', () => openFolder(file.path));
+        } else {
+            fileItem.querySelector('.file-name').addEventListener('click', () => openFile(file.path));
+        }
+
         fileList.appendChild(fileItem);
     });
 }
