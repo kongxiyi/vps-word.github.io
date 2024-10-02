@@ -173,7 +173,8 @@ async function authenticate() {
             throw new Error('认证失败');
         }
         const userData = await response.json();
-        document.getElementById('user-info').textContent = `欢迎，${userData.login}！`;
+        // document.getElementById('user-info').textContent = `欢迎，${userData.login}！`;
+        document.getElementById('user-info').textContent = `当你创建、更新、删除文件或文件夹时，如果文件未显示，请耐心等待0~3min，这或许是因为GitHub的原因...（待解决...准备时候本地缓存，反正GitHub是有的，只是请求报文还没反应过来，报文又不能加入no-cache）`;
         document.getElementById('user-info').style.display = 'block';
         document.getElementById('file-actions').style.display = 'block';
         document.getElementById('auth').style.display = 'none';
