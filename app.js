@@ -159,6 +159,12 @@ async function fetchFiles() {
             }
         });
         
+        if (response.status === 404) {
+            // 文件夹为空或不存在
+            displayNoFilesMessage();
+            return;
+        }
+        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -166,7 +172,7 @@ async function fetchFiles() {
         const files = await response.json();
         displayFiles(files);
     } catch (error) {
-        throw new Error('无法获取文件列表: ' + error.message);
+        showMessage('无法获取文件列表: ' + error.message, true);
     }
 }
 
@@ -463,4 +469,9 @@ function closeNotification() {
     if (notificationElement.timeoutId) {
         clearTimeout(notificationElement.timeoutId);
     }
+}
+
+function displayNoFilesMessage() {
+    const fileList = document.getElementById('file-list');
+    fileList.innerHTML = '<div class="no-files-message">尚未有文件</div>';
 }

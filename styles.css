@@ -346,3 +346,30 @@ button:hover {
 .modal-content button:hover {
     background-color: #45a049;
 }
+
+.no-files-message {
+    text-align: center;
+    padding: 40px 20px;
+    font-size: 20px;
+    color: #34495e;
+    background-color: #ecf0f1;
+    border: 2px dashed #bdc3c7;
+    border-radius: 8px;
+    margin: 20px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.no-files-message:hover {
+    background-color: #e8f4f8;
+    border-color: #3498db;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.no-files-message::before {
+    content: '\1F4C2';  /* 文件夹表情符号 */
+    font-size: 36px;
+    display: block;
+    margin-bottom: 10px;
+}
