@@ -53,38 +53,96 @@ button:hover {
 
 #file-list {
     margin-top: 2rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
 }
 
 .file-item {
-    background: #f9f9f9;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border-radius: 4px;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #eee;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
+    transition: background-color 0.2s;
+}
+
+.file-item:last-child {
+    border-bottom: none;
+}
+
+.file-item:hover {
+    background-color: #f5f5f5;
+}
+
+.folder-name, .file-name {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.folder-name i, .file-name i {
+    margin-right: 10px;
+    font-size: 1.2em;
+}
+
+.folder-name i {
+    color: #f1c40f;
+}
+
+.file-name i {
+    color: #3498db;
+}
+
+.file-actions button {
+    padding: 5px 10px;
+    margin-left: 5px;
+    font-size: 0.9em;
+}
+
+.back-button {
+    background-color: #f1f8ff;
+    cursor: pointer;
+}
+
+.current-path {
+    padding: 0.5rem 1rem;
+    background-color: #e9ecef;
+    border-bottom: 1px solid #ddd;
+    font-weight: bold;
 }
 
 .file-info {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    margin-right: 10px;
+    font-size: 0.8em;
+    color: #666;
+    white-space: nowrap;
 }
 
 .file-name {
     font-weight: bold;
 }
 
-.file-size, .file-date {
-    font-size: 0.8em;
-    color: #666;
+.file-size {
+    margin-right: 10px;
+}
+
+.file-date {
+    margin-left: auto;
 }
 
 .file-actions {
     display: flex;
+    align-items: center;
 }
 
 .file-actions button {
-    margin-left: 0.5rem;
+    padding: 5px 10px;
+    margin-left: 5px;
+    font-size: 0.9em;
 }
 
 #file-content {
@@ -136,6 +194,32 @@ button:hover {
     margin-bottom: 1rem;
 }
 
+#auth {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+#token-input {
+    flex: 1;
+    margin-top:1rem;
+    margin-right: 10px;
+    padding: 10px;
+    font-size: 16px;
+    height: 40px;
+    box-sizing: border-box;
+}
+
+#auth-btn {
+    width: auto;
+    min-width: 100px;
+    padding: 0 10px;
+    font-size: 16px;
+    white-space: nowrap;
+    height: 40px;
+    line-height: 40px;
+}
+
 #auth input, #file-actions input {
     flex-grow: 1;
     margin-right: 1rem;
@@ -148,11 +232,78 @@ button:hover {
     color: #2c3e50;
 }
 
-#new-file-form {
-    margin-top: 1rem;
-    border: 1px solid #ddd;
-    padding: 1rem;
+#new-file-form, #new-folder-form {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+#new-file-form input, #new-folder-form input,
+#new-file-form select, #new-folder-form select,
+#new-file-form textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ced4da;
     border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+#new-file-form input:focus, #new-folder-form input:focus,
+#new-file-form select:focus, #new-folder-form select:focus,
+#new-file-form textarea:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+#new-file-form textarea {
+    min-height: 150px;
+    resize: vertical;
+}
+
+#new-file-form button, #new-folder-form button {
+    padding: 10px 15px;
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#save-new-file-btn, #create-new-folder-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+}
+
+#save-new-file-btn:hover, #create-new-folder-btn:hover {
+    background-color: #218838;
+}
+
+#cancel-new-file-btn, #cancel-new-folder-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    margin-left: 10px;
+}
+
+#cancel-new-file-btn:hover, #cancel-new-folder-btn:hover {
+    background-color: #c82333;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #495057;
 }
 
 #new-file-form input,
@@ -171,6 +322,7 @@ button:hover {
 
 #batch-delete-btn {
     background-color: #e74c3c;
+    margin-bottom: 10px;
 }
 
 #batch-delete-btn:hover {
@@ -345,4 +497,128 @@ button:hover {
 
 .modal-content button:hover {
     background-color: #45a049;
+}
+
+.no-files-message {
+    text-align: center;
+    padding: 40px 20px;
+    font-size: 20px;
+    color: #34495e;
+    background-color: #ecf0f1;
+    border: 2px dashed #bdc3c7;
+    border-radius: 8px;
+    margin: 20px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.no-files-message:hover {
+    background-color: #e8f4f8;
+    border-color: #3498db;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.no-files-message::before {
+    content: '\1F4C2';  /* 文件夹表情符号 */
+    font-size: 36px;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.tree-item {
+    margin: 5px 0;
+    padding-left: 20px;
+}
+
+.folder-name, .file-name {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    margin-right: auto;
+}
+
+.folder-name:hover, .file-name:hover {
+    text-decoration: underline;
+}
+
+.folder-name svg, .file-name svg {
+    margin-right: 5px;
+}
+
+.folder-name svg:last-child {
+    margin-left: 5px;
+}
+
+.folder-content {
+    margin-left: 20px;
+}
+
+.folder-name svg {
+    color: #f1c40f;
+}
+
+.file-name svg {
+    color: #3498db;
+}
+
+.file-actions {
+    display: flex;
+    margin-left: 10px;
+}
+
+.file-actions button {
+    padding: 2px 5px;
+    font-size: 0.8em;
+    margin-left: 5px;
+}
+
+#new-file-parent, #new-folder-parent {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+#new-folder-form {
+    margin-top: 1rem;
+    border: 1px solid #ddd;
+    padding: 1rem;
+    border-radius: 4px;
+}
+
+#new-folder-form input,
+#new-folder-form select {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+#new-folder-form button {
+    margin-right: 0.5rem;
+}
+
+.close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.path-part {
+    cursor: pointer;
+    color: #007bff;
+}
+
+.path-part:hover {
+    text-decoration: underline;
 }

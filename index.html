@@ -5,21 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GitHub文件管理系统</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.2.1/jsencrypt.min.js"></script> -->
      <script src="./jsencrypt.js"></script>
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <h1><i class="fab fa-github"></i> GitHub文件管理系统</h1>
+        <h1><i class="fab fa-github"></i> 文件管理系统</h1>
         <div id="auth">
             <input type="text" id="token-input" placeholder="输入GitHub个人访问令牌">
             <button id="auth-btn"><i class="fas fa-sign-in-alt"></i> 认证</button>
         </div>
         <div id="user-info" style="display: none;"></div>
         <div id="file-actions" style="display: none;">
-            <button id="new-file-btn"><i class="fas fa-plus"></i> 新建文件</button>
+            <button id="new-file-btn" onclick="showNewFileForm()"><i class="fas fa-plus"></i> 新建文件</button>
+            <button id="new-folder-btn" onclick="showNewFolderForm()"><i class="fas fa-folder-plus"></i> 新建文件夹</button>
             <button id="batch-delete-btn"><i class="fas fa-trash"></i> 批量删除</button>
             <button id="refresh-btn"><i class="fas fa-sync-alt"></i> 刷新</button>
             <button id="logout-btn" style="display: none;"><i class="fas fa-sign-out-alt"></i> 退出</button>
@@ -50,6 +51,7 @@
     </div>
     <div id="key-dialog" class="modal">
         <div class="modal-content">
+            <span class="close-btn">&times;</span>
             <h2>请输入密钥</h2>
             <input type="password" id="key-input" placeholder="输入密钥">
             <button id="submit-key">提交</button>
