@@ -373,3 +373,76 @@ button:hover {
     display: block;
     margin-bottom: 10px;
 }
+
+.tree-item {
+    margin: 5px 0;
+    padding-left: 20px;
+}
+
+.folder-name, .file-name {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    margin-right: 10px;
+}
+
+.folder-name:hover, .file-name:hover {
+    text-decoration: underline;
+}
+
+.folder-name svg, .file-name svg {
+    margin-right: 5px;
+}
+
+.folder-name svg:last-child {
+    margin-left: 5px;
+}
+
+.folder-content {
+    margin-left: 20px;
+}
+
+.folder-name svg {
+    color: #f1c40f;
+}
+
+.file-name svg {
+    color: #3498db;
+}
+
+.file-actions {
+    display: inline-flex;
+    margin-left: 10px;
+}
+
+.file-actions button {
+    padding: 2px 5px;
+    font-size: 0.8em;
+    margin-left: 5px;
+}
+
+#new-file-parent, #new-folder-parent {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+#new-folder-form {
+    margin-top: 1rem;
+    border: 1px solid #ddd;
+    padding: 1rem;
+    border-radius: 4px;
+}
+
+#new-folder-form input,
+#new-folder-form select {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+#new-folder-form button {
+    margin-right: 0.5rem;
+}

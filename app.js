@@ -19,6 +19,15 @@ let isEditing = false;
 
 let originalContent = '';
 
+const ROOT_FOLDER = 'files';
+
+const SVG_ICONS = {
+    folder: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>',
+    file: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>',
+    chevronRight: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>',
+    chevronDown: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>'
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     addEventListenerSafely('auth-btn', 'click', authenticate);
     addEventListenerSafely('new-file-btn', 'click', showNewFileForm);
@@ -34,6 +43,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 let currentFilePath = '';
 let isCreatingNewFile = false;
+
+let currentPath = ROOT_FOLDER;
+
+let fileTree = {}; // 初始化为空对象
 
 function addEventListenerSafely(id, event, handler, isQuery = false) {
     const element = isQuery ? document.querySelector(id) : document.getElementById(id);
@@ -150,9 +163,9 @@ async function authenticate() {
     }
 }
 
-async function fetchFiles() {
+async function fetchFiles(path = ROOT_FOLDER) {
     try {
-        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/files`, {
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
             headers: {
                 'Authorization': `token ${token}`,
                 'Accept': 'application/vnd.github.v3+json'
@@ -160,7 +173,6 @@ async function fetchFiles() {
         });
         
         if (response.status === 404) {
-            // 文件夹为空或不存在
             displayNoFilesMessage();
             return;
         }
@@ -170,34 +182,81 @@ async function fetchFiles() {
         }
         
         const files = await response.json();
-        displayFiles(files);
+        fileTree = buildFileTree(files); // 保存文件树到全局变量
+        displayFileTree(fileTree);
     } catch (error) {
         showMessage('无法获取文件列表: ' + error.message, true);
     }
 }
 
-function displayFiles(files) {
-    const fileList = document.getElementById('file-list');
-    fileList.innerHTML = '';
+function buildFileTree(files) {
+    const tree = {};
     files.forEach(file => {
-        if (file.type === 'file') {
-            const fileItem = document.createElement('div');
-            fileItem.className = 'file-item';
-            const lastModified = new Date(file.last_modified).toLocaleString();
-            fileItem.innerHTML = `
-                <div class="file-info">
-                    <span class="file-name">${file.name}</span>
-                    <span class="file-size">${formatFileSize(file.size)}</span>
-                    <span class="file-date">${lastModified}</span>
-                </div>
+        const parts = file.path.split('/');
+        let currentLevel = tree;
+        parts.forEach((part, index) => {
+            if (index === 0 && part === ROOT_FOLDER) return; // 跳过根目录
+            if (!currentLevel[part]) {
+                currentLevel[part] = index === parts.length - 1 ? file : { type: 'dir', children: {} };
+            }
+            if (index === parts.length - 1) {
+                currentLevel[part] = file;
+            } else {
+                currentLevel = currentLevel[part].children;
+            }
+        });
+    });
+    return tree;
+}
+
+function displayFileTree(tree, parentElement = document.getElementById('file-list'), path = '') {
+    parentElement.innerHTML = ''; // 清空现有内容
+    for (const [name, item] of Object.entries(tree)) {
+        const element = document.createElement('div');
+        element.className = 'tree-item';
+        const fullPath = path ? `${path}/${name}` : name;
+        
+        if (item.type === 'dir') {
+            // 这是一个文件夹
+            element.innerHTML = `
+                <span class="folder-name">
+                    ${SVG_ICONS.folder}
+                    ${name}
+                    ${SVG_ICONS.chevronRight}
+                </span>
+                <div class="folder-content" style="display: none;"></div>
+            `;
+            const folderName = element.querySelector('.folder-name');
+            const folderContent = element.querySelector('.folder-content');
+            const chevron = folderName.querySelector('svg:last-child');
+            
+            folderName.addEventListener('click', () => {
+                if (folderContent.style.display === 'none') {
+                    folderContent.style.display = 'block';
+                    chevron.outerHTML = SVG_ICONS.chevronDown;
+                    if (folderContent.children.length === 0) {
+                        displayFileTree(item.children, folderContent, fullPath);
+                    }
+                } else {
+                    folderContent.style.display = 'none';
+                    chevron.outerHTML = SVG_ICONS.chevronRight;
+                }
+            });
+        } else {
+            // 这是一个文件
+            element.innerHTML = `
+                <span class="file-name">
+                    ${SVG_ICONS.file}
+                    ${name}
+                </span>
                 <div class="file-actions">
-                    <button onclick="openFile('${file.path}')">查看</button>
-                    <button onclick="deleteFile('${file.path}')">删除</button>
+                    <button onclick="openFile('${fullPath}')">查看</button>
+                    <button onclick="deleteFile('${fullPath}')">删除</button>
                 </div>
             `;
-            fileList.appendChild(fileItem);
         }
-    });
+        parentElement.appendChild(element);
+    }
 }
 
 function formatFileSize(bytes) {
@@ -212,7 +271,7 @@ async function openFile(filePath) {
     showLoading();
     try {
         await showKeyDialog(); // 每次打开文件都请求密钥
-        const fullPath = filePath.startsWith('files/') ? filePath : `files/${filePath}`;
+        const fullPath = filePath.startsWith(ROOT_FOLDER + '/') ? filePath : `${ROOT_FOLDER}/${filePath}`;
         
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${fullPath}`, {
             headers: {
@@ -277,29 +336,90 @@ function closeFile() {
     isEditing = false;
 }
 
+function showForm(formType) {
+    hideAllForms();
+    const formId = formType === 'file' ? 'new-file-form' : 'new-folder-form';
+    let form = document.getElementById(formId);
+    
+    if (!form) {
+        form = createForm(formType);
+        document.getElementById('file-actions').appendChild(form);
+    }
+    
+    form.style.display = 'block';
+}
+
+function hideAllForms() {
+    const forms = ['new-file-form', 'new-folder-form'];
+    forms.forEach(formId => {
+        const form = document.getElementById(formId);
+        if (form) {
+            form.style.display = 'none';
+        }
+    });
+}
+
+function createForm(formType) {
+    const form = document.createElement('div');
+    form.id = formType === 'file' ? 'new-file-form' : 'new-folder-form';
+    
+    if (formType === 'file') {
+        form.innerHTML = `
+            <input type="text" id="new-file-name" placeholder="新文件名">
+            <select id="new-file-parent">
+                <option value="${ROOT_FOLDER}">根目录</option>
+                ${generateFolderOptions(ROOT_FOLDER)}
+            </select>
+            <textarea id="new-file-content" placeholder="文件内容"></textarea>
+            <button id="save-new-file-btn">保存新文件</button>
+            <button id="cancel-new-file-btn">取消</button>
+        `;
+        form.querySelector('#save-new-file-btn').addEventListener('click', saveNewFile);
+        form.querySelector('#cancel-new-file-btn').addEventListener('click', () => hideForm('file'));
+    } else {
+        form.innerHTML = `
+            <input type="text" id="new-folder-name" placeholder="新文件夹名称">
+            <select id="new-folder-parent">
+                <option value="${ROOT_FOLDER}">根目录</option>
+                ${generateFolderOptions(ROOT_FOLDER)}
+            </select>
+            <button onclick="createNewFolder()">创建</button>
+            <button onclick="hideForm('folder')">取消</button>
+        `;
+    }
+    
+    return form;
+}
+
+function hideForm(formType) {
+    const formId = formType === 'file' ? 'new-file-form' : 'new-folder-form';
+    const form = document.getElementById(formId);
+    if (form) {
+        form.style.display = 'none';
+    }
+}
+
 function showNewFileForm() {
-    document.getElementById('new-file-form').style.display = 'block';
-    document.getElementById('new-file-name').value = '';
-    document.getElementById('new-file-content').value = '';
+    showForm('file');
 }
 
-function hideNewFileForm() {
-    document.getElementById('new-file-form').style.display = 'none';
+function showNewFolderForm() {
+    showForm('folder');
 }
 
+// 修改 saveNewFile 函数
 async function saveNewFile() {
     const fileName = document.getElementById('new-file-name').value.trim();
     const content = document.getElementById('new-file-content').value;
+    const parentFolder = document.getElementById('new-file-parent').value;
     if (!fileName) {
         showMessage('请输入文件名', true);
         return;
     }
     showLoading();
     try {
-        // 使用公钥加密内容
         const encryptedContent = encrypt(content);
-        
-        const fullPath = `files/${fileName}`;
+        const fullPath = `${parentFolder}/${fileName}`;
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${fullPath}`, {
             method: 'PUT',
             headers: {
@@ -314,7 +434,7 @@ async function saveNewFile() {
         });
         if (response.ok) {
             showMessage('新文件已创建并保存（已加密）');
-            hideNewFileForm();
+            hideForm('file');
             fetchFiles();
         } else {
             throw new Error('创建文件失败');
@@ -348,7 +468,7 @@ async function saveFile(filePath) {
             showMessage('加密失败，将保存原始内容', true);
             encryptedContent = content;
         }
-        const fullPath = filePath.startsWith('files/') ? filePath : `files/${filePath}`;
+        const fullPath = filePath.startsWith(ROOT_FOLDER + '/') ? filePath : `${ROOT_FOLDER}/${filePath}`;
         
         if (isCreatingNewFile) {
             // 创建新文件
@@ -414,7 +534,7 @@ async function deleteFile(filePath) {
     if (!confirm(`确定要删除 ${filePath} 吗？`)) return;
     showLoading();
     try {
-        const fullPath = filePath.startsWith('files/') ? filePath : `files/${filePath}`;
+        const fullPath = filePath.startsWith(ROOT_FOLDER + '/') ? filePath : `${ROOT_FOLDER}/${filePath}`;
         
         const fileResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${fullPath}`, {
             headers: {
@@ -474,4 +594,68 @@ function closeNotification() {
 function displayNoFilesMessage() {
     const fileList = document.getElementById('file-list');
     fileList.innerHTML = '<div class="no-files-message">尚未有文件</div>';
+}
+
+// 修改 createNewFolder 函数
+async function createNewFolder() {
+    const folderName = document.getElementById('new-folder-name').value.trim();
+    const parentFolder = document.getElementById('new-folder-parent').value;
+    if (!folderName) {
+        showMessage('请输入文件夹名称', true);
+        return;
+    }
+    
+    try {
+        const fullPath = `${parentFolder}/${folderName}/.gitkeep`;
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${fullPath}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: `Create folder ${folderName}`,
+                content: btoa('') // 创建一个空的 .gitkeep 文件来表示文件夹
+            })
+        });
+        
+        if (response.ok) {
+            showMessage(`文件夹 ${folderName} 已创建`);
+            fetchFiles(); // 刷新文件列表
+            hideForm('folder'); // 隐藏表单
+        } else {
+            throw new Error('创建文件夹失败');
+        }
+    } catch (error) {
+        showMessage('无法创建文件夹: ' + error.message, true);
+    }
+}
+
+function generateFolderOptions(path, prefix = '') {
+    let options = '';
+    const files = getFilesInPath(path);
+    if (files) {
+        for (const [name, item] of Object.entries(files)) {
+            if (item.type === 'dir') {
+                const fullPath = `${path}/${name}`;
+                options += `<option value="${fullPath}">${prefix}${name}</option>`;
+                options += generateFolderOptions(fullPath, prefix + '-- ');
+            }
+        }
+    }
+    return options;
+}
+
+function getFilesInPath(path) {
+    if (!fileTree) return null;
+    const parts = path.split('/').filter(p => p !== ROOT_FOLDER);
+    let currentLevel = fileTree;
+    for (const part of parts) {
+        if (currentLevel[part] && currentLevel[part].type === 'dir') {
+            currentLevel = currentLevel[part].children;
+        } else {
+            return null;
+        }
+    }
+    return currentLevel;
 }
