@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>解密测试</title>
+    <script src="./jsencrypt.js"></script>
+</head>
+<body>
+    <h1>解密测试</h1>
+    <textarea id="plaintext" rows="3" cols="50" placeholder="请输入要加密的内容"></textarea><br>
+    <button id="encrypt-btn">加密</button><br>
+    <textarea id="encrypted-content" rows="5" cols="50" readonly></textarea><br>
+    <input type="text" id="private-key" placeholder="请输入私钥"><br>
+    <button id="decrypt-btn">解密</button>
+    <p id="result"></p>
+
+    <script src="decrypt_test.js"></script>
+</body>
+</html>
