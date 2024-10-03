@@ -100,7 +100,13 @@ function showErrorAlert(errorMessage) {
 function encrypt(content) {
     const encrypt = new JSEncrypt();
     encrypt.setPublicKey(publicKey);
-    return encrypt.encrypt(content);
+    const chunkSize = 100;
+    let encrypted = '';
+    for (let i = 0; i < content.length; i += chunkSize) {
+        const chunk = content.slice(i, i + chunkSize);
+        encrypted += encrypt.encrypt(chunk) + '|';
+    }
+    return encrypted.slice(0, -1); // 移除最后一个分隔符
 }
 
 function decrypt(ciphertext) {
@@ -109,9 +115,14 @@ function decrypt(ciphertext) {
     }
     const decrypt = new JSEncrypt();
     decrypt.setPrivateKey(privateKey);
-    const decrypted = decrypt.decrypt(ciphertext);
-    if (decrypted === null) {
-        throw new Error('解密失败，请检查私钥是否正确');
+    const chunks = ciphertext.split('|');
+    let decrypted = '';
+    for (const chunk of chunks) {
+        const decryptedChunk = decrypt.decrypt(chunk);
+        if (decryptedChunk === null) {
+            throw new Error('解密失败，请检查私钥是否正确');
+        }
+        decrypted += decryptedChunk;
     }
     return decrypted;
 }
