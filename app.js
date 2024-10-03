@@ -265,17 +265,11 @@ function displayFiles(files) {
         const fileItem = document.createElement('div');
         fileItem.className = 'file-item';
         const icon = file.type === 'dir' ? '<i class="fas fa-folder"></i>' : '<i class="fas fa-file"></i>';
-        const size = file.type === 'file' ? formatFileSize(file.size) : '';
-        const lastUpdated = new Date(file.updated_at).toLocaleString();
         fileItem.innerHTML = `
             ${file.type === 'file' ? `<input type="checkbox" class="file-checkbox" data-path="${file.path}">` : ''}
             <span class="${file.type === 'dir' ? 'folder-name' : 'file-name'}">
                 ${icon}
                 ${file.name}
-            </span>
-            <span class="file-info">
-                ${size ? `<span class="file-size">${size}</span>` : ''}
-                <span class="file-date">${lastUpdated}</span>
             </span>
             <div class="file-actions">
                 ${file.type === 'dir' 

@@ -113,38 +113,6 @@ button:hover {
     font-weight: bold;
 }
 
-.file-info {
-    display: flex;
-    align-items: center;
-    margin-right: 10px;
-    font-size: 0.8em;
-    color: #666;
-    white-space: nowrap;
-}
-
-.file-name {
-    font-weight: bold;
-}
-
-.file-size {
-    margin-right: 10px;
-}
-
-.file-date {
-    margin-left: auto;
-}
-
-.file-actions {
-    display: flex;
-    align-items: center;
-}
-
-.file-actions button {
-    padding: 5px 10px;
-    margin-left: 5px;
-    font-size: 0.9em;
-}
-
 #file-content {
     margin-top: 2rem;
     border: 1px solid #ddd;
